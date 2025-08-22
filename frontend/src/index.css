@@ -1,0 +1,239 @@
+@import "tailwindcss";
+
+/* Custom Markdown Preview Styles */
+.markdown-preview {
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.markdown-preview h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin: 1em 0 0.5em 0;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #D1D5DB;
+  color: #374151;
+}
+
+.markdown-preview h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 1em 0 0.5em 0;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid #D1D5DB;
+  color: #374151;
+}
+
+.markdown-preview h3 {
+  font-size: 1.25em;
+  font-weight: bold;
+  margin: 1em 0 0.5em 0;
+  color: #374151;
+}
+
+.markdown-preview h4 {
+  font-size: 1em;
+  font-weight: bold;
+  margin: 1em 0 0.5em 0;
+  color: #374151;
+}
+
+.markdown-preview h5 {
+  font-size: 0.875em;
+  font-weight: bold;
+  margin: 1em 0 0.5em 0;
+  color: #374151;
+}
+
+.markdown-preview h6 {
+  font-size: 0.85em;
+  font-weight: bold;
+  margin: 1em 0 0.5em 0;
+  color: #374151;
+}
+
+.markdown-preview p {
+  margin: 0.75em 0;
+  color: #6B7280;
+}
+
+.markdown-preview ul, .markdown-preview ol {
+  margin: 0.75em 0;
+  padding-left: 2em;
+  color: #6B7280;
+}
+
+.markdown-preview li {
+  margin: 0.25em 0;
+  color: #6B7280;
+}
+
+.markdown-preview blockquote {
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  border-left: 4px solid #F59E0B;
+  background-color: #FEF3C7;
+  color: #92400E;
+  font-style: italic;
+}
+
+.markdown-preview code {
+  background-color: #F3F4F6;
+  color: #DC2626;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25em;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875em;
+}
+
+.markdown-preview pre {
+  background-color: #F9FAFB;
+  color: #374151;
+  padding: 1em;
+  border-radius: 0.5em;
+  overflow-x: auto;
+  margin: 1em 0;
+  border: 1px solid #E5E7EB;
+}
+
+.markdown-preview pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+}
+
+.markdown-preview a {
+  color: #2563EB;
+  text-decoration: underline;
+}
+
+.markdown-preview a:hover {
+  color: #1D4ED8;
+}
+
+.markdown-preview strong {
+  font-weight: bold;
+  color: #374151;
+}
+
+.markdown-preview em {
+  font-style: italic;
+  color: #6B7280;
+}
+
+.markdown-preview hr {
+  border: none;
+  border-top: 1px solid #E5E7EB;
+  margin: 2em 0;
+}
+
+.markdown-preview table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.markdown-preview th, .markdown-preview td {
+  border: 1px solid #E5E7EB;
+  padding: 0.5em;
+  text-align: left;
+  color: #6B7280;
+}
+
+.markdown-preview th {
+  background-color: #F3F4F6;
+  font-weight: bold;
+  color: #374151;
+}
+
+.markdown-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5em;
+  margin: 1em 0;
+}
+
+/* Custom Scrollbar Styles */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #FEF3C7;
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #F59E0B;
+  border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #D97706;
+}
+
+/* Firefox scrollbar */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #F59E0B #FEF3C7;
+}
+
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: #374151;
+  background-color: #FEF3C7;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #2563EB;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #1D4ED8;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #FEF3C7;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+  color: #374151;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #F59E0B;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+button:hover {
+  background-color: #D97706;
+  transform: translateY(-1px);
+}
+button:focus,
+button:focus-visible {
+  outline: 2px solid #F59E0B;
+  outline-offset: 2px;
+}

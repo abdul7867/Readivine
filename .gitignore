@@ -1,0 +1,13 @@
+# General
+.env
+*.log
+
+# Frontend Specific
+/frontend/node_modules
+/frontend/dist
+/frontend/.env.local
+
+# Backend Specific
+/backend/node_modules
+/backend/build
+/backend/.env
