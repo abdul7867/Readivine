@@ -15,7 +15,13 @@ const generateContent = async (prompt, model = "openai/gpt-oss-20b:free") => {
       OPENROUTER_API_URL,
       {
         model: model,
-        messages: [{ role: "user", content: prompt }],
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert README generator. Your response must be only the raw Markdown content for the requested README.md file. Do not include any conversational text, introductions, or the original prompt in your response. Begin the response directly with the Markdown content."
+          },
+          { role: "user", content: prompt }
+        ],
       },
       {
         headers: {

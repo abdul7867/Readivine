@@ -17,6 +17,24 @@ const apiClient = axios.create({
 });
 
 const DashboardPage = () => {
+  // Fetch repositories and templates from API
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [repoResponse, templateResponse] = await Promise.all([
+        apiClient.get('/github/repos'),
+        apiClient.get('/templates'),
+      ]);
+      setRepos(repoResponse.data.data);
+      setTemplates(templateResponse.data.data);
+      setIsLoggedIn(true);
+    } catch (err) {
+      setError('⚠️ Your session may have expired. Redirecting to login...');
+      setTimeout(() => navigate('/login'), 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [repos, setRepos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,23 +53,8 @@ const DashboardPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [repoResponse, templateResponse] = await Promise.all([
-          apiClient.get('/github/repos'),
-          apiClient.get('/templates'),
-        ]);
-        setRepos(repoResponse.data.data);
-        setTemplates(templateResponse.data.data);
-        setIsLoggedIn(true);
-      } catch (err) {
-        setError('⚠️ Your session may have expired. Redirecting to login...');
-        setTimeout(() => navigate('/login'), 3000);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  // Initial data fetch on mount
+  fetchData();
   }, [navigate]);
 
   const handleAnalyzeRepo = async (repoFullName) => {
@@ -108,25 +111,19 @@ const DashboardPage = () => {
   };
 
   const handleRetry = () => {
+    // If error is from generating README, reset dashboard states and reload data
+    if (error && error.includes('Failed to analyze')) {
+      setError('');
+      setSelectedRepo(null);
+      setGeneratedReadme('');
+      setSaveSuccess(false);
+      setIsAnalyzing(false);
+      // Fetch latest repos/templates after error
+      fetchData();
+      return;
+    }
+    // For other errors, just retry data fetch
     setError('');
-    setLoading(true);
-    // Retry fetching data
-    const fetchData = async () => {
-      try {
-        const [repoResponse, templateResponse] = await Promise.all([
-          apiClient.get('/github/repos'),
-          apiClient.get('/templates'),
-        ]);
-        setRepos(repoResponse.data.data);
-        setTemplates(templateResponse.data.data);
-        setIsLoggedIn(true);
-      } catch (err) {
-        setError('⚠️ Your session may have expired. Redirecting to login...');
-        setTimeout(() => navigate('/login'), 3000);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   };
 
