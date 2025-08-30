@@ -1,4 +1,5 @@
 import {ApiError} from '../utils/ApiError.js';
+import { ApiResponse } from '../utils/ApiResponse.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { User } from '../models/User.model.js';
 import dotenv from "dotenv";
@@ -88,6 +89,18 @@ const handleGitHubCallback = asyncHandler(async (req, res) => {
   }
 });
 
+// --- NEW: Get Authentication Status Function ---
+const getAuthStatus = asyncHandler(async (req, res) => {
+  // req.user is set by verifyJWT middleware
+  const user = {
+    id: req.user.id,
+    username: req.user.username,
+    githubId: req.user.githubId
+  };
+  
+  res.status(200).json(new ApiResponse(200, { user, success: true }, "Authentication status retrieved successfully."));
+});
+
 // --- NEW: Logout Function ---
 const logoutUser = asyncHandler(async (req, res) => {
   const options = {
@@ -103,4 +116,4 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 
-export { redirectToGitHub, handleGitHubCallback, logoutUser }; // Export the new function
+export { redirectToGitHub, handleGitHubCallback, logoutUser, getAuthStatus }; // Export the new function
