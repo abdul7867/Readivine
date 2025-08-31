@@ -11,3 +11,8 @@
 /backend/node_modules
 /backend/build
 /backend/.env
+
+# IDE Specific
+newUi.json
+ReadmeUI.json
+CHANGELOG.md
