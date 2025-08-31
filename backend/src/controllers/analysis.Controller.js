@@ -7,19 +7,36 @@ import { User } from '../models/User.model.js'; // 1. Import the User model
 import axios from 'axios';
 
 /**
- * @description Cleans the raw AI response by finding the start of the Markdown content.
+ * @description Cleans the raw AI response by removing artifacts and finding valid markdown content.
  * @param {string} response - The raw response from the AI service.
  * @returns {string} The cleaned README content.
  */
 const cleanAiResponse = (response) => {
-  // Most READMEs start with a title, which is an H1 header.
-  // We look for the first occurrence of either a Markdown H1 or an HTML H1 tag.
-  const markdownH1Index = response.indexOf('# ');
-  const htmlH1Index = response.toLowerCase().indexOf('<h1>');
-
+  // Remove common AI response prefixes and artifacts
+  const prefixPatterns = [
+    /^(Here's|Here is|I'll|I will|Let me|Based on|The following is|This is).*?(?=\n\n|\n#)/si,
+    /^.*?(?:README|readme).*?(?:for|file).*?(?=\n\n|\n#)/si,
+    /^.*?(?:analysis|generate|create).*?(?=\n\n|\n#)/si,
+    /^.*?(?:repository|project).*?(?:structure|analysis).*?(?=\n\n|\n#)/si
+  ];
+  
+  let cleaned = response;
+  
+  // Remove AI response prefixes
+  for (const pattern of prefixPatterns) {
+    cleaned = cleaned.replace(pattern, '');
+  }
+  
+  // Remove leading whitespace and empty lines
+  cleaned = cleaned.replace(/^\s*\n+/, '');
+  
+  // Find the start of meaningful markdown content
+  const markdownH1Index = cleaned.indexOf('# ');
+  const htmlH1Index = cleaned.toLowerCase().indexOf('<h1>');
+  
   let startIndex = -1;
-
-  // Find the earliest valid starting point.
+  
+  // Find the earliest valid starting point
   if (markdownH1Index !== -1 && htmlH1Index !== -1) {
     startIndex = Math.min(markdownH1Index, htmlH1Index);
   } else if (markdownH1Index !== -1) {
@@ -27,16 +44,32 @@ const cleanAiResponse = (response) => {
   } else {
     startIndex = htmlH1Index; // Will be -1 if neither is found
   }
-
+  
   if (startIndex !== -1) {
-    // If we found a heading, return the substring from that point.
-    return response.substring(startIndex).trim();
+    // Extract content from the valid starting point
+    cleaned = cleaned.substring(startIndex);
   }
-
-  // If no heading is found, the format is unexpected.
-  // We log a warning and return the full response to avoid deleting content.
-  console.warn("Could not find a clear H1 starting point in the AI response. Returning the full response.");
-  return response.trim();
+  
+  // Additional cleaning for better content quality
+  cleaned = cleaned
+    // Remove multiple consecutive newlines
+    .replace(/\n{3,}/g, '\n\n')
+    // Remove incomplete bullet points
+    .replace(/^\s*[-*+]\s*$/gm, '')
+    // Remove empty code blocks
+    .replace(/```\s*\n\s*```/g, '')
+    // Remove trailing whitespace from lines
+    .replace(/[ \t]+$/gm, '')
+    // Ensure proper spacing after headers
+    .replace(/(#{1,6}\s+.+)\n([^\n#])/g, '$1\n\n$2')
+    .trim();
+  
+  if (!cleaned) {
+    console.warn("Content cleaning resulted in empty string. Returning original response.");
+    return response.trim();
+  }
+  
+  return cleaned;
 };
 
 

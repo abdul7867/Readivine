@@ -1,13 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage = () => {
-  // The full URL to our backend's GitHub authentication route
-  const GITHUB_AUTH_URL = 'http://localhost:8080/api/auth/github';
+  const [isDesktop, setIsDesktop] = useState(false);
+  const { login, error, clearError } = useAuth();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth > 768);
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleLogin = () => {
-    // When the button is clicked, we redirect the user's window to our backend.
-    // The backend will then handle the redirect to GitHub.
-    window.location.href = GITHUB_AUTH_URL;
+    clearError(); // Clear any previous errors
+    login();
   };
 
   return (
@@ -61,6 +71,11 @@ const LoginPage = () => {
 
           {/* CTA Button */}
           <div className="mb-16">
+            {error && (
+              <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg max-w-md mx-auto">
+                {error}
+              </div>
+            )}
             <button 
               onClick={handleLogin}
               className="group relative inline-flex items-center justify-center px-12 py-6 text-xl font-bold text-white bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 rounded-2xl shadow-2xl transform transition-all duration-300 hover:scale-105 hover:shadow-3xl overflow-hidden"
@@ -167,7 +182,7 @@ const LoginPage = () => {
                 <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center mx-auto text-2xl font-bold text-white shadow-xl">
                   1
                 </div>
-                {window.innerWidth > 768 && (
+                {isDesktop && (
                   <div className="absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-amber-400 to-yellow-500 transform -translate-y-1/2"></div>
                 )}
               </div>
@@ -183,7 +198,7 @@ const LoginPage = () => {
                 <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto text-2xl font-bold text-white shadow-xl">
                   2
                 </div>
-                {window.innerWidth > 768 && (
+                {isDesktop && (
                   <div className="absolute top-1/2 -right-4 w-8 h-0.5 bg-gradient-to-r from-yellow-400 to-orange-500 transform -translate-y-1/2"></div>
                 )}
               </div>

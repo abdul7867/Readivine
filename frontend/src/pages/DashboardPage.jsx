@@ -1,6 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useEffect } from 'react';
+
+// Import custom hooks
+import {
+  useDashboardData,
+  useReadmeGeneration,
+  useReadmeSaving,
+  useDashboardAuth
+} from '../hooks/useDashboard';
 
 // Import modular components
 import Header from '../components/Header';
@@ -9,122 +15,47 @@ import StatsSection from '../components/StatsSection';
 import RepositoryList from '../components/RepositoryList';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorDisplay from '../components/ErrorDisplay';
-import ReadmeEditorModal from '../components/ReadmeEditorModal';
-
-const apiClient = axios.create({
-  baseURL: 'http://localhost:8080/api',
-  withCredentials: true,
-});
+import ReadmeEditor from '../components/ReadmeEditor';
 
 const DashboardPage = () => {
-  // Fetch repositories and templates from API
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [repoResponse, templateResponse] = await Promise.all([
-        apiClient.get('/github/repos'),
-        apiClient.get('/templates'),
-      ]);
-      setRepos(repoResponse.data.data);
-      setTemplates(templateResponse.data.data);
-      setIsLoggedIn(true);
-    } catch (err) {
-      setError('⚠️ Your session may have expired. Redirecting to login...');
-      setTimeout(() => navigate('/login'), 3000);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [repos, setRepos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  // Use custom hooks for state management
+  const { repos, templates, loading, error, fetchData, handleRetry, setError } = useDashboardData();
+  const {
+    selectedTemplate,
+    setSelectedTemplate,
+    isAnalyzing,
+    generatedReadme,
+    setGeneratedReadme,
+    selectedRepo,
+    handleAnalyzeRepo,
+    resetReadmeState
+  } = useReadmeGeneration();
+  const { handleLogout } = useDashboardAuth();
 
-  const [templates, setTemplates] = useState([]);
-  const [selectedTemplate, setSelectedTemplate] = useState('default');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [generatedReadme, setGeneratedReadme] = useState('');
-  const [selectedRepo, setSelectedRepo] = useState(null);
-
-  const [commitMessage, setCommitMessage] = useState('docs: add generated README.md');
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-
-  const navigate = useNavigate();
-
+  // Initialize data fetching on mount
   useEffect(() => {
-  // Initial data fetch on mount
-  fetchData();
-  }, [navigate]);
+    fetchData();
+  }, [fetchData]);
 
-  const handleAnalyzeRepo = async (repoFullName) => {
-    setIsAnalyzing(true);
-    setGeneratedReadme('');
-    setSelectedRepo(repoFullName);
-    setSaveSuccess(false);
-    try {
-      const response = await apiClient.post('/github/analyze', {
-        repoFullName: repoFullName,
-        templateId: selectedTemplate,
-      });
-      setGeneratedReadme(response.data.data.readme);
-    } catch (err) {
-      setError(`❌ Failed to analyze ${repoFullName}. Please try again.`);
-    } finally {
-      setIsAnalyzing(false);
-    }
+  // Handle repository analysis with error callback
+  const onAnalyzeRepo = (repoFullName) => {
+    handleAnalyzeRepo(repoFullName, setError);
   };
 
-  const handleSaveToGithub = async () => {
-    setIsSaving(true);
-    setSaveSuccess(false);
-    try {
-      await apiClient.post('/github/save-readme', {
-        repoFullName: selectedRepo,
-        readmeContent: generatedReadme,
-        commitMessage: commitMessage,
-      });
-      setSaveSuccess(true);
-      setTimeout(() => closeModal(), 2000);
-    } catch (err) {
-      setError(`❌ Failed to save README to ${selectedRepo}.`);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await apiClient.post('/auth/logout');
-    } catch (err) {
-      console.error("Logout failed:", err);
-    } finally {
-      setIsLoggedIn(false);
-      navigate('/login');
-    }
-  };
-
-  const closeModal = () => {
-    setSelectedRepo(null);
-    setGeneratedReadme('');
-    setSaveSuccess(false);
-  };
-
-  const handleRetry = () => {
-    // If error is from generating README, reset dashboard states and reload data
+  // Handle retry with specific error handling
+  const onRetry = () => {
     if (error && error.includes('Failed to analyze')) {
       setError('');
-      setSelectedRepo(null);
-      setGeneratedReadme('');
-      setSaveSuccess(false);
-      setIsAnalyzing(false);
-      // Fetch latest repos/templates after error
+      resetReadmeState(setError);
       fetchData();
       return;
     }
-    // For other errors, just retry data fetch
-    setError('');
-    fetchData();
+    handleRetry();
+  };
+
+  // Enhanced close handler that clears errors
+  const handleModalClose = () => {
+    resetReadmeState(setError);
   };
 
   if (loading) {
@@ -132,16 +63,16 @@ const DashboardPage = () => {
   }
 
   if (error) {
-    return <ErrorDisplay error={error} onRetry={handleRetry} />;
+    return <ErrorDisplay error={error} onRetry={onRetry} />;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 text-amber-900 px-4 sm:px-6 py-6 sm:py-8">
       <div className="max-w-7xl mx-auto space-y-8">
-                {/* Header */}
+        {/* Header */}
         <Header onLogout={handleLogout} />
 
-                {/* Template Selector */}
+        {/* Template Selector */}
         <TemplateSelector
           templates={templates}
           selectedTemplate={selectedTemplate}
@@ -160,25 +91,19 @@ const DashboardPage = () => {
           repos={repos}
           isAnalyzing={isAnalyzing}
           selectedRepo={selectedRepo}
-          onAnalyzeRepo={handleAnalyzeRepo}
+          onAnalyzeRepo={onAnalyzeRepo}
         />
       </div>
 
       {/* README Editor Modal */}
-      {selectedRepo && (
-        <ReadmeEditorModal
-          selectedRepo={selectedRepo}
-          generatedReadme={generatedReadme}
-          setGeneratedReadme={setGeneratedReadme}
-          isAnalyzing={isAnalyzing}
-          onClose={closeModal}
-          onSave={handleSaveToGithub}
-          commitMessage={commitMessage}
-          setCommitMessage={setCommitMessage}
-          isSaving={isSaving}
-          saveSuccess={saveSuccess}
-        />
-      )}
+      <ReadmeEditor
+        selectedRepo={selectedRepo}
+        generatedReadme={generatedReadme}
+        setGeneratedReadme={setGeneratedReadme}
+        isAnalyzing={isAnalyzing}
+        onClose={handleModalClose}
+        onError={setError}
+      />
     </div>
   );
 };
