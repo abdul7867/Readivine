@@ -3,9 +3,14 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
+// Get API base URL from environment variables
+const getApiBaseUrl = () => {
+  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+};
+
 // Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: getApiBaseUrl(),
   withCredentials: true,
 });
 
@@ -49,8 +54,10 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async () => {
     try {
+      // Get the backend URL from environment
+      const backendUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:8080';
       // Redirect to GitHub OAuth
-      window.location.href = 'http://localhost:8080/api/auth/github';
+      window.location.href = `${backendUrl}/api/auth/github`;
     } catch (error) {
       console.error('Login failed:', error);
       setError('Login failed. Please try again.');

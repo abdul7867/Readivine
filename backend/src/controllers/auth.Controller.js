@@ -71,11 +71,18 @@ const handleGitHubCallback = asyncHandler(async (req, res) => {
     const options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000
+      maxAge: 24 * 60 * 60 * 1000,
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     };
+    
     res.cookie('sessionToken', sessionToken, options);
 
-    res.redirect('http://localhost:5173/dashboard');
+    // Get frontend URL from environment
+    const frontendUrl = process.env.NODE_ENV === 'production' 
+      ? process.env.FRONTEND_URL || 'https://your-app-name.vercel.app'
+      : process.env.FRONTEND_URL_DEV || 'http://localhost:5173';
+    
+    res.redirect(`${frontendUrl}/dashboard`);
 
   } catch (error) {
       if (error.response) {
@@ -106,6 +113,7 @@ const logoutUser = asyncHandler(async (req, res) => {
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   };
 
   // To log out, we clear the cookie from the user's browser
