@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage = () => {
   const [isDesktop, setIsDesktop] = useState(false);
+  const [loginError, setLoginError] = useState('');
   const { login, error, clearError } = useAuth();
 
   useEffect(() => {
@@ -15,9 +17,27 @@ const LoginPage = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleLogin = () => {
-    clearError(); // Clear any previous errors
-    login();
+  useEffect(() => {
+    // Check for authentication error in URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const authError = urlParams.get('error');
+    if (authError === 'auth_failed') {
+      setLoginError('Authentication failed. Please try again.');
+      // Clear error from URL without page reload
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []);
+
+  const handleLogin = async () => {
+    clearError();
+    setLoginError('');
+    try {
+      await login();
+    } catch (err) {
+      console.error('Login error:', err);
+      setLoginError('Failed to initiate login. Please try again.');
+    }
   };
 
   return (
@@ -71,9 +91,9 @@ const LoginPage = () => {
 
           {/* CTA Button */}
           <div className="mb-16">
-            {error && (
+            {(error || loginError) && (
               <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg max-w-md mx-auto">
-                {error}
+                {error || loginError}
               </div>
             )}
             <button 
