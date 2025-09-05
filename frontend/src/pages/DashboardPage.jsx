@@ -32,9 +32,12 @@ const DashboardPage = () => {
   } = useReadmeGeneration();
   const { handleLogout } = useDashboardAuth();
 
-  // Initialize data fetching on mount
+  // Initialize data fetching on mount - with authentication check
   useEffect(() => {
-    fetchData();
+    // Only fetch data if we have the fetchData function
+    if (fetchData) {
+      fetchData();
+    }
   }, [fetchData]);
 
   // Handle repository analysis with error callback

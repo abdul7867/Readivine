@@ -16,7 +16,7 @@ const apiClient = axios.create({
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with loading true
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
@@ -50,6 +50,11 @@ export const AuthProvider = ({ children }) => {
       setHasCheckedAuth(true);
     }
   };
+
+  // Initialize authentication check on mount
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
 
   // Login function
   const login = async () => {
