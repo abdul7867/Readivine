@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 // Custom hook for managing dashboard data (repos and templates)
 export const useDashboardData = () => {
-  const { logout, apiClient } = useAuth();
+  const { logout, apiClient, isAuthenticated } = useAuth();
   const [repos, setRepos] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,6 +12,12 @@ export const useDashboardData = () => {
 
   // Fetch repositories and templates from API
   const fetchData = useCallback(async () => {
+    // Don't fetch if not authenticated
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
@@ -32,7 +38,7 @@ export const useDashboardData = () => {
     } finally {
       setLoading(false);
     }
-  }, [apiClient, logout]);
+  }, [apiClient, logout, isAuthenticated]);
 
   const handleRetry = useCallback(() => {
     setError('');

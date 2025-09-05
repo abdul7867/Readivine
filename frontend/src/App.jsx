@@ -16,36 +16,49 @@ const ProtectedRoute = ({ children }) => {
   
   // Check authentication only if needed
   React.useEffect(() => {
-    checkAuthIfNeeded();
-  }, [checkAuthIfNeeded]);
+    if (!hasCheckedAuth && !isLoading) {
+      checkAuthIfNeeded();
+    }
+  }, [checkAuthIfNeeded, hasCheckedAuth, isLoading]);
   
+  // Show loading while checking authentication
   if (isLoading || !hasCheckedAuth) {
     return <LoadingSpinner message="Checking authentication..." />;
   }
   
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  // If not authenticated, redirect to login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return children;
 };
 
 // Public Route Component (redirect to dashboard if already authenticated)
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, isLoading, hasCheckedAuth } = useAuth();
   
-  // For public routes, only show loading if we're actually checking auth
-  if (isLoading && hasCheckedAuth) {
-    return <LoadingSpinner message="Checking authentication..." />;
+  // Show loading only during initial auth check
+  if (isLoading && !hasCheckedAuth) {
+    return <LoadingSpinner message="Loading..." />;
   }
   
-  // If we haven't checked auth yet, don't redirect - just show the public content
-  if (!hasCheckedAuth) {
-    return children;
+  // If authenticated, redirect to dashboard
+  if (hasCheckedAuth && isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
   }
   
-  return isAuthenticated ? <Navigate to="/dashboard" /> : children;
+  return children;
 };
 
 // App Routes Component (needs to be inside AuthProvider)
 const AppRoutes = () => {
-  const { isAuthenticated, hasCheckedAuth } = useAuth();
+  const { isAuthenticated, hasCheckedAuth, isLoading } = useAuth();
+  
+  // Show loading during initial auth check
+  if (isLoading && !hasCheckedAuth) {
+    return <LoadingSpinner message="Initializing application..." />;
+  }
   
   return (
     <Routes>
@@ -69,13 +82,11 @@ const AppRoutes = () => {
         } 
       />
 
-      {/* Default route - only redirect if we've checked auth */}
+      {/* Default route - redirect based on auth status */}
       <Route 
         path="/" 
         element={
-          hasCheckedAuth ? 
-            <Navigate to={isAuthenticated ? "/dashboard" : "/login"} /> : 
-            <Navigate to="/login" />
+          <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
         } 
       />
       
@@ -83,9 +94,7 @@ const AppRoutes = () => {
       <Route 
         path="*" 
         element={
-          hasCheckedAuth ? 
-            <Navigate to={isAuthenticated ? "/dashboard" : "/login"} /> : 
-            <Navigate to="/login" />
+          <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
         } 
       />
     </Routes>
