@@ -21,16 +21,43 @@ const getFrontendUrl = () => {
   return process.env.FRONTEND_URL_DEV || 'http://localhost:5173';
 };
 
-// --- Middleware Setup ---
+// Enhanced CORS configuration with dynamic origin handling
 app.use(cors({
-  origin: [
-    getFrontendUrl(),
-    'http://localhost:5173', // Always allow localhost for development
-    'http://localhost:3000'  // Alternative dev port
-  ],
+  origin: function(origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Build allowed origins list based on environment
+    const allowedOrigins = [];
+    
+    // Add production URLs if they exist
+    if (process.env.FRONTEND_URL) {
+      allowedOrigins.push(process.env.FRONTEND_URL);
+    }
+    
+    // Add development URLs
+    if (process.env.FRONTEND_URL_DEV) {
+      allowedOrigins.push(process.env.FRONTEND_URL_DEV);
+    }
+    
+    // Always allow common development ports
+    allowedOrigins.push('http://localhost:5173', 'http://localhost:3000');
+    
+    // Remove duplicates and undefined values
+    const uniqueOrigins = [...new Set(allowedOrigins.filter(Boolean))];
+    
+    if (uniqueOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked request from origin: ${origin}`);
+      console.log('Allowed origins:', uniqueOrigins);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  optionsSuccessStatus: 200
 }));
 
 app.use(helmet({
