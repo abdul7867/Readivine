@@ -68,31 +68,19 @@ const handleGitHubCallback = asyncHandler(async (req, res) => {
     const jwtPayload = { id: user._id, githubId: user.githubId, username: user.username };
     const sessionToken = jwt.sign(jwtPayload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    // Enhanced cookie configuration for cross-domain compatibility
     const options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 24 * 60 * 60 * 1000,
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      // Domain is automatically handled by browser in both environments
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     };
     
     res.cookie('sessionToken', sessionToken, options);
 
-    // Smart frontend URL resolution - works in both dev and prod
-    const getFrontendUrl = () => {
-      if (process.env.NODE_ENV === 'production') {
-        if (!process.env.FRONTEND_URL) {
-          throw new ApiError(500, "FRONTEND_URL environment variable is required in production");
-        }
-        return process.env.FRONTEND_URL;
-      }
-      // Development mode - flexible fallback
-      return process.env.FRONTEND_URL_DEV || 'http://localhost:5173';
-    };
-    
-    const frontendUrl = getFrontendUrl();
-    console.log(`Redirecting to: ${frontendUrl}/dashboard`); // Debug logging
+    // Get frontend URL from environment
+    const frontendUrl = process.env.NODE_ENV === 'production' 
+      ? process.env.FRONTEND_URL || 'https://your-app-name.vercel.app'
+      : process.env.FRONTEND_URL_DEV || 'http://localhost:5173';
     
     res.redirect(`${frontendUrl}/dashboard`);
 
@@ -104,25 +92,7 @@ const handleGitHubCallback = asyncHandler(async (req, res) => {
   }
   
     console.error("Error during GitHub callback:", error);
-    
-    // Smart error redirection - works in both environments
-    const getErrorRedirectUrl = () => {
-      try {
-        if (process.env.NODE_ENV === 'production') {
-          return process.env.FRONTEND_URL || null;
-        }
-        return process.env.FRONTEND_URL_DEV || 'http://localhost:5173';
-      } catch {
-        return null;
-      }
-    };
-    
-    const errorRedirectUrl = getErrorRedirectUrl();
-    if (errorRedirectUrl) {
-      res.redirect(`${errorRedirectUrl}/login?error=auth_failed`);
-    } else {
-      throw new ApiError(500, "An error occurred during GitHub authentication.");
-    }
+    throw new ApiError(500, "An error occurred during GitHub authentication.");
   }
 });
 
