@@ -145,6 +145,7 @@ app.get('/health', (req, res) => {
 
 // --- Centralized Error Handling ---
 app.use((err, req, res, next) => {
+    // If the error is a known API error, handle it gracefully
     if (err instanceof ApiError) {
         return res.status(err.statusCode).json({
             statusCode: err.statusCode,
@@ -154,15 +155,15 @@ app.use((err, req, res, next) => {
         });
     }
 
-    // For unhandled errors
+    // For all other unexpected errors, log them and send a generic 500 response
     console.error('Unhandled Error:', err);
     
-    // Ensure we have a valid status code
-    const statusCode = err.statusCode && typeof err.statusCode === 'number' ? err.statusCode : 500;
+    // Ensure a valid status code is always sent. Default to 500.
+    const statusCode = (err.statusCode && Number.isInteger(err.statusCode)) ? err.statusCode : 500;
     
     return res.status(statusCode).json({
         statusCode: statusCode,
-        message: err.message || 'Internal Server Error',
+        message: 'An unexpected internal server error occurred.',
         success: false,
     });
 });

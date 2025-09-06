@@ -2,6 +2,7 @@ import axios from 'axios';
 import { ApiError } from '../utils/ApiError.js';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const REQUEST_TIMEOUT = 30000; // 30 seconds
 
 const generateContent = async (prompt, model = "openai/gpt-oss-20b:free") => {
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -28,10 +29,10 @@ const generateContent = async (prompt, model = "openai/gpt-oss-20b:free") => {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
+        timeout: REQUEST_TIMEOUT, // Set a client-side timeout
       }
     );
 
-    // --- FIX: Add robust checking for the response structure ---
     if (!response.data || !response.data.choices || response.data.choices.length === 0) {
       console.error("Invalid response structure from OpenRouter:", response.data);
       throw new ApiError(500, "Received an invalid or empty response from the AI model.");
@@ -45,9 +46,17 @@ const generateContent = async (prompt, model = "openai/gpt-oss-20b:free") => {
 
     return content.trim();
   } catch (error) {
-    // Log the detailed error from the API if it exists
+    if (error.code === 'ECONNABORTED') {
+      console.error("OpenRouter API request timed out.");
+      throw new ApiError(408, "The request to the AI service timed out. Please try again.");
+    }
+    
     console.error("Error calling OpenRouter API:", error.response?.data || error.message);
-    throw new ApiError(502, "Failed to communicate with the AI service.");
+    
+    const statusCode = error.response?.status || 502;
+    const message = error.response?.data?.error?.message || "Failed to communicate with the AI service.";
+    
+    throw new ApiError(statusCode, message);
   }
 };
 
