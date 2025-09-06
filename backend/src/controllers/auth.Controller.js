@@ -129,12 +129,23 @@ const redirectToGitHub = asyncHandler(async (req, res) => {
     throw new ApiError(500, 'GitHub Client ID is not configured.');
   }
   const authUrl = 'https://github.com/login/oauth/authorize';
+  const callbackURL = process.env.GITHUB_CALLBACK_URL;
+  if (!callbackURL) {
+    throw new ApiError(500, 'GitHub Callback URL is not configured.');
+  }
+
+  logger.info(`Using GitHub Callback URL: ${callbackURL}`);
+
   const params = new URLSearchParams({
     client_id: githubClientId,
     scope: 'repo user:email',
-    redirect_uri: process.env.GITHUB_CALLBACK_URL,
+    redirect_uri: callbackURL,
   });
-  res.redirect(`${authUrl}?${params.toString()}`);
+  const redirectUrl = `${authUrl}?${params.toString()}`;
+
+  logger.info(`Redirecting to GitHub for authorization: ${redirectUrl}`);
+
+  res.redirect(redirectUrl);
 });
 
 const handleGitHubCallback = asyncHandler(async (req, res) => {
