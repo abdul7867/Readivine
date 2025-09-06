@@ -53,7 +53,7 @@ const redirectToGitHub = asyncHandler(async (req, res) => {
   const authUrl = 'https://github.com/login/oauth/authorize';
   const callbackURL = process.env.GITHUB_CALLBACK_URL;
   if (!callbackURL) {
-    throw new ApiError(500, 'GitHub Callback URL is not configured.');
+    throw new ApiError(500, 'GitHub Callback URL is not configured. Please set the GITHUB_CALLBACK_URL environment variable.');
   }
 
   // This logging is crucial for debugging your production 404 error
