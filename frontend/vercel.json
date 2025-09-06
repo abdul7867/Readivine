@@ -5,6 +5,28 @@
       "destination": "/index.html"
     }
   ],
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/api/v1/auth/github/callback",
+      "has": [
+        {
+          "type": "query",
+          "key": "error"
+        }
+      ],
+      "destination": "/login?error=auth_failed",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/(.*\\.(?:js|jsx|ts|tsx|mjs))$",
@@ -34,6 +56,24 @@
       ]
     },
     {
+      "source": "/login",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/dashboard",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {
@@ -42,7 +82,7 @@
         },
         {
           "key": "X-Frame-Options",
-          "value": "DENY"
+          "value": "SAMEORIGIN"
         },
         {
           "key": "X-XSS-Protection",
