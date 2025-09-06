@@ -77,14 +77,13 @@ const corsOptions = {
       }
     }
     
-    // Log rejected origins in development for debugging
+    // If origin is not allowed, reject the request
+    // Log rejected origins for debugging purposes
     if (!isProduction) {
-      console.warn(`CORS rejected origin: ${origin}`);
-      return callback(null, true); // Allow all in development
+      console.warn(`CORS rejected origin in development: ${origin}`);
+    } else {
+      console.error(`CORS rejected origin in production: ${origin}`);
     }
-    
-    // Reject in production
-    console.error(`CORS rejected origin: ${origin}`);
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
