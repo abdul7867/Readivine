@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ModalHeader from './ModalHeader';
 import TabSwitcher from './TabSwitcher';
 import EditorTab from './EditorTab';
@@ -19,59 +19,38 @@ const ReadmeEditorModal = ({
 }) => {
   const [activeTab, setActiveTab] = useState('editor');
   
-  // Helper to reset all modal state
-  const resetState = () => {
-    setGeneratedReadme('');
-    setCommitMessage('');
-    setActiveTab('editor'); // Reset to default tab
-  };
-
-  const sanitizeContent = (content) => {
+  const sanitizeContent = useCallback((content) => {
     if (!content) return '';
     
-    let cleaned = content
-      // Only remove very specific AI response prefixes at the start
-      .replace(/^(Here's a|Here is a|I'll create a|I will generate a|Let me create a|Based on your repository, here's a|The following is a generated|This is a generated).*?README.*?(?=\n#|\n\n#)/si, '')
-      .replace(/^Here's the generated README.*?(?=\n#|\n\n#)/si, '')
-      // Remove AI commentary that appears before actual content
-      .replace(/^.*?I'll analyze.*?and generate.*?(?=\n#|\n\n#)/si, '')
-      // Remove multiple newlines (safe)
-      .replace(/\n{3,}/g, '\n\n')
-      // Remove empty links and images (safe)
-      .replace(/\[\s*\]\(\s*\)/g, '')
-      .replace(/!\[\s*\]\(\s*\)/g, '')
-      // Remove empty code blocks (safe)
-      .replace(/```\s*\n\s*```/g, '')
-      // Remove only truly empty headers (more specific)
-      .replace(/^\s*#{1,6}\s*$\n?/gm, '')
-      // Clean up malformed tables (safe)
-      .replace(/\|\s*\|\s*\|/g, '|')
-      // Remove HTML comments (safe)
-      .replace(/<!--[\s\S]*?-->/g, '')
-      // Ensure proper spacing after headers (safe)
-      .replace(/(#{1,6}\s+.+)\n([^\n#])/g, '$1\n\n$2')
-      // Remove trailing whitespace (safe)
-      .replace(/[ \t]+$/gm, '')
-      // Fix broken markdown links (safe)
-      .replace(/\[([^\]]+)\]\(\s*\)/g, '**$1**')
-      // Remove incomplete bullet points (safe)
-      .replace(/^\s*[-*+]\s*$\n?/gm, '')
-      .trim();
+    // This regex is designed to find the first meaningful line of Markdown (a heading)
+    // and discard any conversational intro text before it.
+    const match = content.match(/(^#\s.*)/m);
     
+    // If a heading is found, we take everything from that point onwards.
+    // Otherwise, we fall back to a simpler trim to avoid deleting user content.
+    let cleaned = match ? content.substring(match.index) : content.trim();
+    
+    // Additional safe clean-up rules
+    cleaned = cleaned
+      .replace(/\n{3,}/g, '\n\n') // Collapse excessive newlines
+      .replace(/<!--[\s\S]*?-->/g, ''); // Remove HTML comments
+
     return cleaned;
-  };
+  }, []);
+
+  // When the modal is opened or the AI is done analyzing, sanitize the content
+  useEffect(() => {
+    if (generatedReadme && !isAnalyzing) {
+      const cleaned = sanitizeContent(generatedReadme);
+      if (cleaned !== generatedReadme) {
+        setGeneratedReadme(cleaned);
+      }
+    }
+  }, [generatedReadme, isAnalyzing, sanitizeContent, setGeneratedReadme]);
 
   // Handler for modal close
   const handleClose = () => {
-    resetState();
     onClose();
-  };
-
-  // Handler for save to GitHub
-  const handleSave = () => {
-    const cleanedReadme = sanitizeContent(generatedReadme);
-    setGeneratedReadme(cleanedReadme);
-    onSave(cleanedReadme);
   };
 
   return (
@@ -105,7 +84,6 @@ const ReadmeEditorModal = ({
             generatedReadme={generatedReadme}
             isAnalyzing={isAnalyzing}
             activeTab={activeTab}
-            sanitizeContent={sanitizeContent}
           />
         </div>
 
@@ -113,7 +91,7 @@ const ReadmeEditorModal = ({
         <ModalFooter 
           commitMessage={commitMessage}
           setCommitMessage={setCommitMessage}
-          onSave={handleSave}
+          onSave={onSave}
           isSaving={isSaving}
           saveSuccess={saveSuccess}
           hasContent={!!generatedReadme.trim()}

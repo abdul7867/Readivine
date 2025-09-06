@@ -1,13 +1,13 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-// Removed rehypeRaw import for security
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 
 const PreviewTab = ({ 
   generatedReadme, 
   isAnalyzing, 
-  activeTab, 
-  sanitizeContent 
+  activeTab
 }) => {
   return (
     <div className={`flex flex-col flex-1 overflow-y-auto bg-gradient-to-br from-amber-100/60 via-yellow-100/20 to-orange-100/60 backdrop-blur-xl rounded-3xl border border-amber-500/20 ${
@@ -35,11 +35,9 @@ const PreviewTab = ({
           <div className="markdown-preview text-amber-900 leading-relaxed break-words">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
-              disallowedElements={['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea', 'select', 'button']}
-              unwrapDisallowed={true}
-              skipHtml={true}
+              rehypePlugins={[rehypeRaw, rehypeSanitize]}
             >
-              {sanitizeContent(generatedReadme)}
+              {generatedReadme}
             </ReactMarkdown>
           </div>
         ) : (
