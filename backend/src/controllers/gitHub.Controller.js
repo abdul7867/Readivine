@@ -1,6 +1,7 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
+import logger from '../utils/logger.js';
 import { User } from '../models/User.model.js'; // 1. Import the User model
 import axios from 'axios';
 
@@ -23,7 +24,7 @@ const getUserRepos = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User not found or GitHub token is missing.");
   }
 
-  const githubAccessToken = user.githubAccessToken;
+  const githubAccessToken = user.getDecryptedAccessToken();
 
   try {
     // 4. Make the authenticated request to the GitHub API
@@ -51,7 +52,7 @@ const getUserRepos = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, repos, "Repositories fetched successfully."));
 
   } catch (error) {
-    console.error("Failed to fetch GitHub repos:", error.response?.data || error.message);
+    logger.error(`Failed to fetch GitHub repos for user ${userId}: ${error.message}`, { stack: error.stack, response: error.response?.data });
     throw new ApiError(500, "Failed to fetch repositories from GitHub.");
   }
 });

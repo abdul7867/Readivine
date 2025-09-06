@@ -18,3 +18,10 @@
 newUi.json
 ReadmeUI.json
 CHANGELOG.md
+# Ignore Markdown files
+*.md
+
+
+# Ignore environment variable files
+.env
+.env.*

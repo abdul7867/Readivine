@@ -99,7 +99,7 @@ const analyzeRepository = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User not found or GitHub token is missing.");
   }
 
-  const githubAccessToken = user.githubAccessToken;
+  const githubAccessToken = user.getDecryptedAccessToken();
 
   try {
     // 4. Fetch the file structure (git tree) from the GitHub API

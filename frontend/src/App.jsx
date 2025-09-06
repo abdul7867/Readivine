@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import toast, { Toaster } from 'react-hot-toast';
 
 // Import authentication context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -12,14 +13,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading, hasCheckedAuth, checkAuthIfNeeded } = useAuth();
-  
-  // Check authentication only if needed
-  React.useEffect(() => {
-    if (!hasCheckedAuth && !isLoading) {
-      checkAuthIfNeeded();
-    }
-  }, [checkAuthIfNeeded, hasCheckedAuth, isLoading]);
+  const { isAuthenticated, isLoading, hasCheckedAuth } = useAuth();
   
   // Show loading while checking authentication
   if (isLoading || !hasCheckedAuth) {
@@ -86,7 +80,11 @@ const AppRoutes = () => {
       <Route 
         path="/" 
         element={
-          <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
+          hasCheckedAuth ? (
+            <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
+          ) : (
+            <LoadingSpinner message="Loading..." />
+          )
         } 
       />
       
@@ -94,7 +92,11 @@ const AppRoutes = () => {
       <Route 
         path="*" 
         element={
-          <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
+          hasCheckedAuth ? (
+            <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
+          ) : (
+            <LoadingSpinner message="Loading..." />
+          )
         } 
       />
     </Routes>
@@ -103,13 +105,38 @@ const AppRoutes = () => {
 
 function App() {
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <Router>
+    <Router>
+      <ErrorBoundary>
+        <AuthProvider>
           <AppRoutes />
-        </Router>
-      </AuthProvider>
-    </ErrorBoundary>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#fef3c7', // amber-100
+                color: '#92400e', // amber-800
+                border: '1px solid #f59e0b', // amber-500
+              },
+              success: {
+                style: {
+                  background: '#dcfce7', // green-100
+                  color: '#166534', // green-800
+                  border: '1px solid #22c55e', // green-500
+                },
+              },
+              error: {
+                style: {
+                  background: '#fee2e2', // red-100
+                  color: '#991b1b', // red-800
+                  border: '1px solid #ef4444', // red-500
+                },
+              },
+            }}
+          />
+        </AuthProvider>
+      </ErrorBoundary>
+    </Router>
   );
 }
 

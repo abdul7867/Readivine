@@ -1,54 +1,61 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
+import toast from 'react-hot-toast';
 
 // Custom hook for managing dashboard data (repos and templates)
 export const useDashboardData = () => {
-  const { logout, apiClient, isAuthenticated } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const [repos, setRepos] = useState([]);
   const [templates, setTemplates] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   // Fetch repositories and templates from API
   const fetchData = useCallback(async () => {
     // Don't fetch if not authenticated
     if (!isAuthenticated) {
-      setLoading(false);
+      setIsLoading(false);
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
     setError('');
     try {
       const [repoResponse, templateResponse] = await Promise.all([
-        apiClient.get('/github/repos'),
-        apiClient.get('/templates'),
+        api.get('/github/repos'),
+        api.get('/templates'),
       ]);
       setRepos(repoResponse.data.data || []);
       setTemplates(templateResponse.data.data || []);
     } catch (err) {
       console.error('Failed to fetch data:', err);
       if (err.response?.status === 401) {
-        setError('⚠️ Your session has expired. Please log in again.');
+        const errorMsg = 'Your session has expired. Please log in again.';
+        setError(errorMsg);
+        toast.error(errorMsg);
         setTimeout(() => logout(), 2000);
       } else {
-        setError('⚠️ Failed to load data. Please try again.');
+        const errorMsg = 'Failed to load data. Please try again.';
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [apiClient, logout, isAuthenticated]);
+  }, [logout, isAuthenticated]);
 
   const handleRetry = useCallback(() => {
     setError('');
+    toast.dismiss(); // Clear any existing toasts
     fetchData();
   }, [fetchData]);
 
   return {
     repos,
     templates,
-    loading,
+    isLoading,
     error,
     fetchData,
     handleRetry,
@@ -58,7 +65,6 @@ export const useDashboardData = () => {
 
 // Custom hook for managing README generation workflow
 export const useReadmeGeneration = () => {
-  const { apiClient } = useAuth();
   const [selectedTemplate, setSelectedTemplate] = useState('default');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [generatedReadme, setGeneratedReadme] = useState('');
@@ -74,21 +80,28 @@ export const useReadmeGeneration = () => {
       onError('');
     }
     
+    // Show loading toast
+    const loadingToast = toast.loading(`Analyzing ${repoFullName}...`);
+    
     try {
-      const response = await apiClient.post('/github/analyze', {
+      const response = await api.post('/github/analyze', {
         repoFullName: repoFullName,
         templateId: selectedTemplate,
       });
       setGeneratedReadme(response.data.data.readme);
+      toast.success(`Successfully analyzed ${repoFullName}!`, { id: loadingToast });
     } catch (err) {
       console.error('Failed to analyze repository:', err);
+      const errorMsg = `Failed to analyze ${repoFullName}. Please try again.`;
+      
       if (onError) {
-        onError(`❌ Failed to analyze ${repoFullName}. Please try again.`);
+        onError(errorMsg);
       }
+      toast.error(errorMsg, { id: loadingToast });
     } finally {
       setIsAnalyzing(false);
     }
-  }, [apiClient, selectedTemplate]);
+  }, [selectedTemplate]);
 
   const resetReadmeState = useCallback((clearError) => {
     setSelectedRepo(null);
@@ -113,7 +126,6 @@ export const useReadmeGeneration = () => {
 
 // Custom hook for managing README saving workflow
 export const useReadmeSaving = (selectedRepo, generatedReadme, onClose) => {
-  const { apiClient } = useAuth();
   const defaultCommitMessage = 'docs: add generated README.md';
   const [commitMessage, setCommitMessage] = useState(defaultCommitMessage);
   const [isSaving, setIsSaving] = useState(false);
@@ -123,8 +135,11 @@ export const useReadmeSaving = (selectedRepo, generatedReadme, onClose) => {
     setIsSaving(true);
     setSaveSuccess(false);
     
+    // Show loading toast
+    const loadingToast = toast.loading(`Saving README to ${selectedRepo}...`);
+    
     try {
-      await apiClient.post('/github/save-readme', {
+      await api.post('/github/save-readme', {
         repoFullName: selectedRepo,
         readmeContent: generatedReadme,
         commitMessage: commitMessage,
@@ -132,26 +147,29 @@ export const useReadmeSaving = (selectedRepo, generatedReadme, onClose) => {
       setSaveSuccess(true);
       // Reset commit message to default after successful save
       setCommitMessage(defaultCommitMessage);
+      toast.success(`Successfully saved README to ${selectedRepo}!`, { id: loadingToast });
       setTimeout(() => {
         setSaveSuccess(false);
         if (onClose) onClose();
       }, 2000);
     } catch (err) {
       console.error('Failed to save README:', err);
+      const errorMsg = `Failed to save README to ${selectedRepo}.`;
+      
       if (onError) {
-        onError(`❌ Failed to save README to ${selectedRepo}.`);
+        onError(errorMsg);
       }
+      toast.error(errorMsg, { id: loadingToast });
     } finally {
       setIsSaving(false);
     }
-  }, [apiClient, selectedRepo, generatedReadme, commitMessage, onClose, defaultCommitMessage]);
+  }, [selectedRepo, generatedReadme, commitMessage, onClose]);
 
-  // Reset function for cleaning up save states
   const resetSaveState = useCallback(() => {
     setCommitMessage(defaultCommitMessage);
     setIsSaving(false);
     setSaveSuccess(false);
-  }, [defaultCommitMessage]);
+  }, []);
 
   return {
     commitMessage,
@@ -171,9 +189,11 @@ export const useDashboardAuth = () => {
   const handleLogout = useCallback(async () => {
     try {
       await logout();
+      toast.success('Successfully logged out!');
       navigate('/login');
     } catch (err) {
       console.error('Logout failed:', err);
+      toast.error('Logout failed, but redirecting to login...');
       // Still navigate to login even if logout fails
       navigate('/login');
     }
