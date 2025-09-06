@@ -1,7 +1,7 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
-import { Readme } from '../models/readme.model.js';
+import { Readme } from '../models/Readme.model.js';
 import mongoose from 'mongoose';
 
 // ... (getReadme, saveReadme, deleteReadme functions are unchanged)
