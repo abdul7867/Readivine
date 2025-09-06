@@ -1,41 +1,36 @@
 import jwt from 'jsonwebtoken';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { User } from '../models/User.model.js'; // Corrected the import path if necessary
+import { User } from '../models/User.model.js';
 
-
-/**
- * Middleware to verify the JWT from the secure httpOnly cookie.
- * If the token is valid, it attaches the user's information to the request object.
- */
-const verifyJWT = asyncHandler(async (req, res, next) => {
+export const verifyJWT = asyncHandler(async (req, res, next) => {
   try {
-    // 1. Extract the token directly from the cookies sent by the browser
-    const token = req.cookies?.sessionToken;
+    const token = req.cookies?.accessToken || req.header('Authorization')?.replace('Bearer ', '');
 
     if (!token) {
-      throw new ApiError(401, 'Unauthorized request: No session token provided.');
+      throw new ApiError(401, 'Unauthorized request');
     }
 
-    // 2. Verify the token using our secret key
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
-    // 3. Find the user in the database based on the ID in the token
-    const user = await User.findById(decodedToken?.id).select('-githubAccessToken'); // Don't select the sensitive token
+    const user = await User.findById(decodedToken?._id).select('-password -refreshToken');
 
     if (!user) {
-      // This is a security measure: if the user in the token doesn't exist, the token is invalid.
-      throw new ApiError(401, 'Invalid session. User not found.');
+      throw new ApiError(401, 'Invalid Access Token');
     }
 
-    // 4. Attach the user object to the request for the next handlers to use
     req.user = user;
-    
     next();
   } catch (error) {
-    // Handle JWT errors and other issues
-    throw new ApiError(401, error?.message || 'Invalid access token.');
+    if (error.name === 'TokenExpiredError') {
+      throw new ApiError(401, 'Access token expired');
+    }
+    if (error.name === 'JsonWebTokenError') {
+      throw new ApiError(401, 'Invalid access token');
+    }
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(401, error?.message || 'Invalid access token');
   }
 });
-
-export { verifyJWT };

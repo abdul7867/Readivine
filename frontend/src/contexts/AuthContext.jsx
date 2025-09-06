@@ -1,37 +1,29 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import api from '../services/api'; // Import the centralized api instance
+import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
 
-// Get API base URL from environment variables
-const getApiBaseUrl = () => {
-  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
-};
-
-// Create axios instance with base configuration
-const apiClient = axios.create({
-  baseURL: getApiBaseUrl(),
-  withCredentials: true,
-});
-
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Start with loading true
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
   const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
+  const navigate = useNavigate();
 
-  // Check authentication status on app load
   const checkAuthStatus = async () => {
     setIsLoading(true);
     setError('');
-    
     try {
-      const response = await apiClient.get('/auth/status');
-      
-      if (response.data && response.data.success) {
+      // Use the new /check endpoint that doesn't require authentication
+      const response = await api.get('/auth/check');
+      if (response.data && response.data.success && response.data.data.authenticated) {
         setIsAuthenticated(true);
-        setUser(response.data.user || null);
+        // The user object is nested inside a 'user' property in the response
+        setUser(response.data.data.user || null);
       } else {
         setIsAuthenticated(false);
         setUser(null);
@@ -40,10 +32,10 @@ export const AuthProvider = ({ children }) => {
       console.error('Auth status check failed:', error);
       setIsAuthenticated(false);
       setUser(null);
-      
-      // Only set error if it's not a 401 (unauthorized)
       if (error.response?.status !== 401) {
-        setError('Failed to check authentication status');
+        const errorMsg = 'Failed to check authentication status';
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
     } finally {
       setIsLoading(false);
@@ -51,54 +43,55 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Initialize authentication check on mount
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
-  // Login function
-  const login = async () => {
-    try {
-      // Get the backend URL from environment
-      const backendUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:8080';
-      // Redirect to GitHub OAuth
-      window.location.href = `${backendUrl}/api/auth/github`;
-    } catch (error) {
-      console.error('Login failed:', error);
-      setError('Login failed. Please try again.');
-    }
+  const login = () => {
+    // The redirect logic is clean and correct.
+    // It constructs the full URL to the backend's GitHub auth endpoint.
+    const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+    window.location.href = `${backendUrl}/auth/github`;
   };
 
-  // Logout function
   const logout = async () => {
+    if (isLoggingOut) return; // Prevent multiple logout calls
+
+    setIsLoggingOut(true);
     setIsLoading(true);
     setError('');
-    
+
+    const loadingToast = toast.loading('Signing out...');
+
     try {
-      await apiClient.post('/auth/logout');
-    } catch (error) {
-      console.error('Logout failed:', error);
-      // Don't show error to user for logout failures
-    } finally {
+      await api.post('/auth/logout');
+      toast.success('Successfully signed out!', { id: loadingToast });
+
+      // Controlled delay for user feedback
+      await new Promise(resolve => setTimeout(resolve, 1200));
+
+      // State updates and navigation after delay
       setIsAuthenticated(false);
       setUser(null);
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      toast.error('Logout failed. Please try again.', { id: loadingToast });
+    } finally {
       setIsLoading(false);
+      setIsLoggingOut(false); // Release the lock
     }
   };
 
-  // Clear error function
-  const clearError = () => {
-    setError('');
-  };
-
-  // Smart authentication check - only check if not already checked
   const checkAuthIfNeeded = async () => {
     if (!hasCheckedAuth && !isLoading) {
       await checkAuthStatus();
     }
   };
 
-
+  const clearError = () => {
+    setError('');
+  };
 
   const value = {
     isAuthenticated,
@@ -111,7 +104,6 @@ export const AuthProvider = ({ children }) => {
     clearError,
     checkAuthStatus,
     checkAuthIfNeeded,
-    apiClient, // Expose configured axios instance
   };
 
   return (
@@ -121,14 +113,11 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use authentication context
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
   return context;
 };
 

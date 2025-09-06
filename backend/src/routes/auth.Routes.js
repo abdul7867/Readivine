@@ -1,34 +1,42 @@
 import { Router } from 'express';
-import { asyncHandler } from '../utils/asyncHandler.js';
-import { verifyJWT } from '../middleware/auth.middleware.js';
-
-// We will create these controller functions in the very next step.
 import { 
-    redirectToGitHub, 
-    handleGitHubCallback,
     logoutUser,
-    getAuthStatus
+    redirectToGitHub, 
+    handleGitHubCallback, 
+    getAuthStatus 
 } from '../controllers/auth.Controller.js';
+import { verifyJWT } from '../middleware/auth.middleware.js';
 
 const router = Router();
 
-// --- Route Definitions ---
+// --- Public Routes ---
+// router.route('/register').post(registerUser);
+// router.route('/login').post(loginUser);
 
-// Route to initiate the GitHub OAuth flow.
-// This is wrapped in asyncHandler to catch any potential async errors.
-router.route('/github').get(asyncHandler(redirectToGitHub));
+// --- GitHub OAuth Routes ---
+router.route('/github').get(redirectToGitHub);
+router.route('/github/callback').get(handleGitHubCallback);
 
-// The callback URL that GitHub will redirect to after user authorization.
-// This route will handle the logic of exchanging the code for an access token.
-router.route('/github/callback').get(asyncHandler(handleGitHubCallback));
+// --- Public auth status check (optional auth) ---
+router.route('/check').get((req, res, next) => {
+    // Try to verify JWT, but don't fail if it's not there
+    const token = req.cookies?.accessToken || req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+        return res.status(200).json({
+            statusCode: 200,
+            data: { authenticated: false, user: null },
+            message: "Not authenticated",
+            success: true
+        });
+    }
+    
+    // If token exists, proceed with verification
+    verifyJWT(req, res, next);
+}, getAuthStatus);
 
 // --- Protected Routes ---
-// Route to check authentication status
-router.route('/status').get(verifyJWT, asyncHandler(getAuthStatus));
-
-// 2. Add the new logout route. It's a POST request for best practice.
-// We protect it with verifyJWT to ensure only a logged-in user can log out.
-router.route('/logout').post(verifyJWT, asyncHandler(logoutUser));
-
+router.route('/logout').post(verifyJWT, logoutUser);
+router.route('/status').get(verifyJWT, getAuthStatus);
 
 export default router;

@@ -19,7 +19,7 @@ import ReadmeEditor from '../components/ReadmeEditor';
 
 const DashboardPage = () => {
   // Use custom hooks for state management
-  const { repos, templates, loading, error, fetchData, handleRetry, setError } = useDashboardData();
+  const { repos, templates, isLoading, error, fetchData, handleRetry, setError } = useDashboardData();
   const {
     selectedTemplate,
     setSelectedTemplate,
@@ -61,7 +61,7 @@ const DashboardPage = () => {
     resetReadmeState(setError);
   };
 
-  if (loading) {
+  if (isLoading) {
     return <LoadingSpinner message="Loading your dashboard..." />;
   }
 
