@@ -1,13 +1,13 @@
 {
   "rewrites": [
     {
-      "source": "/((?!api|.*\\.).*)",
+      "source": "/((?!api/|_next/|.*\\..*).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
     {
-      "source": "/.*\\.(js|jsx|ts|tsx|mjs)$",
+      "source": "/(.*\\.(?:js|jsx|ts|tsx|mjs))$",
       "headers": [
         {
           "key": "Content-Type",
