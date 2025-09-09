@@ -208,18 +208,35 @@ GITHUB_CALLBACK_URL=${BACKEND_URL}/api/v1/auth/github/callback
 OPENROUTER_API_KEY=sk-or-v1-your-openrouter-api-key
 
 # Encryption
-ENCRYPTION_KEY=your-32-character-encryption-key
+CRYPTO_SECRET_KEY=your-32-character-encryption-key
 
-# CORS & Frontend
+# CORS Configuration for Cross-Domain Authentication
 CORS_ORIGIN=${FRONTEND_URL}
+ADDITIONAL_CORS_ORIGINS=
 FRONTEND_URL=${FRONTEND_URL}
+
+# Cookie Configuration for Cross-Domain Authentication
+COOKIE_DOMAIN=
+COOKIE_SECURE=true
+COOKIE_SAME_SITE=none
+COOKIE_HTTP_ONLY=true
 EOF
 
     cat > frontend_env_variables.txt << EOF
 # Frontend Environment Variables for Vercel
 # Copy these to your Vercel project settings
 
+# Backend API Configuration
 VITE_API_BASE_URL=${BACKEND_URL}/api/v1
+
+# Authentication Configuration
+VITE_WITH_CREDENTIALS=true
+
+# App Configuration
+VITE_APP_NAME=Readivine
+VITE_APP_VERSION=1.0.0
+VITE_NODE_ENV=production
+VITE_DEBUG_MODE=false
 EOF
 
     print_success "Environment variable templates created:"

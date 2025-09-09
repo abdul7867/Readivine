@@ -79,6 +79,28 @@ public
 # Specific files to ignore
 src/validators/auth.validator.js
 
+# Development and testing files
+src/test/temp/
+src/test/fixtures/
+test-output/
+
+# Generated files
+*.generated.js
+*.generated.json
+
+# Backup files
+*.bak
+*.backup
+
+# Database files (if using local DB)
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary uploads
+uploads/temp/
+temp-uploads/
+
 # OS generated files
 .DS_Store
 .DS_Store?
