@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/((?!api/.*).*)",
+      "source": "/((?!api|_next|static|favicon.ico|robots.txt|sitemap.xml|.*\\..*).*)",
       "destination": "/index.html"
     }
   ],
@@ -77,7 +77,7 @@
       ]
     }
   ],
-  "cleanUrls": true,
+  "cleanUrls": false,
   "trailingSlash": false,
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
