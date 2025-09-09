@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 // Import the page components we created
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import DebugPage from './pages/DebugPage';
 import LoadingSpinner from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -74,6 +75,12 @@ const AppRoutes = () => {
             <DashboardPage />
           </ProtectedRoute>
         } 
+      />
+
+      {/* Debug route - only accessible in development or with special flag */}
+      <Route 
+        path="/debug" 
+        element={<DebugPage />} 
       />
 
       {/* Default route - redirect based on auth status */}

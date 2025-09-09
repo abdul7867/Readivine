@@ -78,11 +78,33 @@ export const AuthProvider = ({ children }) => {
       if (isDevelopment) {
         backendUrl = "http://localhost:8080/api/v1";
       } else {
-        backendUrl = "https://readivine.onrender.com/api/v1";
+        // Enhanced production fallback
+        const currentHostname = window.location.hostname;
+        if (currentHostname.includes("vercel.app")) {
+          backendUrl = "https://readivine-backend.onrender.com/api/v1";
+        } else {
+          backendUrl = "https://readivine-backend.onrender.com/api/v1";
+        }
       }
     }
 
-    window.location.href = `${backendUrl}/auth/github`;
+    // Log for debugging in production (stored in localStorage)
+    const loginAttempt = {
+      timestamp: new Date().toISOString(),
+      backendUrl,
+      currentUrl: window.location.href,
+      userAgent: navigator.userAgent,
+    };
+    
+    if (import.meta.env.DEV) {
+      console.log("Initiating GitHub login:", loginAttempt);
+    } else {
+      // Store for production debugging
+      window.localStorage.setItem("lastLoginAttempt", JSON.stringify(loginAttempt));
+    }
+
+    const authUrl = `${backendUrl}/auth/github`;
+    window.location.href = authUrl;
   };
 
   const logout = async () => {
