@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 // Custom hook for managing dashboard data (repos and templates)
 export const useDashboardData = () => {
-  const { logout, isAuthenticated } = useAuth();
+  const { logout, isAuthenticated, refreshAuthStatus } = useAuth();
   const [repos, setRepos] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,10 +32,24 @@ export const useDashboardData = () => {
     } catch (err) {
       console.error('Failed to fetch data:', err);
       if (err.response?.status === 401) {
-        const errorMsg = 'Your session has expired. Please log in again.';
-        setError(errorMsg);
-        toast.error(errorMsg);
-        setTimeout(() => logout(), 2000);
+        // Try refreshing auth status first before logging out
+        try {
+          await refreshAuthStatus();
+          // If refresh succeeds, the user is still authenticated, retry the request
+          const [repoResponse, templateResponse] = await Promise.all([
+            api.get('/github/repos'),
+            api.get('/templates'),
+          ]);
+          setRepos(repoResponse.data.data || []);
+          setTemplates(templateResponse.data.data || []);
+          return; // Success after refresh, exit early
+        } catch (refreshErr) {
+          // If refresh also fails, then truly not authenticated
+          const errorMsg = 'Your session has expired. Please log in again.';
+          setError(errorMsg);
+          toast.error(errorMsg);
+          setTimeout(() => logout(), 2000);
+        }
       } else {
         const errorMsg = 'Failed to load data. Please try again.';
         setError(errorMsg);
@@ -44,7 +58,7 @@ export const useDashboardData = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [logout, isAuthenticated]);
+  }, [logout, isAuthenticated, refreshAuthStatus]);
 
   const handleRetry = useCallback(() => {
     setError('');

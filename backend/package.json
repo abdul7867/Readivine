@@ -5,7 +5,14 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch --runInBand",
+    "test:coverage": "jest --coverage --runInBand",
+    "test:auth": "node src/test/testRunner.js",
+    "test:integration": "jest --runInBand src/test/integration/",
+    "validate-config": "node ../scripts/validate-config.js",
+    "validate": "npm run validate-config"
   },
   "keywords": [
     "readivine",
@@ -33,6 +40,8 @@
     "winston": "^3.17.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.10",
+    "supertest": "^6.3.3"
   }
 }

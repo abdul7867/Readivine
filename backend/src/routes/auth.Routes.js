@@ -4,7 +4,9 @@ import {
     redirectToGitHub, 
     handleGitHubCallback, 
     getAuthStatus,
-    checkCookies
+    checkCookies,
+    debugCookieConfig,
+    debugOAuthFlow
 } from '../controllers/auth.Controller.js';
 import { verifyJWT } from '../middleware/auth.middleware.js';
 
@@ -42,5 +44,7 @@ router.route('/status').get(verifyJWT, getAuthStatus);
 
 // --- Debug Routes ---
 router.route('/cookies').get(checkCookies);
+router.route('/debug/config').get(debugCookieConfig);
+router.route('/debug/oauth').get(debugOAuthFlow);
 
 export default router;
