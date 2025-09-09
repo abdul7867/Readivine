@@ -19,33 +19,9 @@ const getApiBaseUrl = () => {
   }
 
   if (isProduction) {
-    const currentOrigin = window.location.origin;
-    const currentHostname = window.location.hostname;
-
-    // Production environment - use environment variable or intelligent fallback
-    // Check for production API URL environment variable first
-    if (import.meta.env.VITE_PROD_API_URL) {
-      return import.meta.env.VITE_PROD_API_URL;
-    }
-
-    // Smart fallback based on deployment platform
-    if (currentHostname.includes("vercel.app")) {
-      // Use the configured Render backend URL
-      return "https://readivine-backend.onrender.com/api/v1";
-    }
-
-    if (currentHostname.includes("netlify.app")) {
-      // Netlify deployment
-      return "https://readivine-backend.onrender.com/api/v1";
-    }
-
-    // Custom domain fallback
-    if (currentHostname === "readivine.com" || currentHostname === "www.readivine.com") {
-      return "https://api.readivine.com/api/v1";
-    }
-
-    // Generic fallback for production
-    return "https://readivine-backend.onrender.com/api/v1";
+    // In production, we use a relative URL to leverage Vercel's proxy rewrites.
+    // This makes all API requests appear to come from the same domain, solving cookie issues.
+    return "/";
   }
 
   // Final fallback to localhost

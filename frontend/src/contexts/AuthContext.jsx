@@ -67,44 +67,34 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = () => {
-    // The redirect logic is clean and correct.
-    // It constructs the full URL to the backend's GitHub auth endpoint.
-    let backendUrl =
-      import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_PROD_API_URL;
-
-    // Fallback logic for production
-    if (!backendUrl) {
-      const isDevelopment = import.meta.env.DEV;
-      if (isDevelopment) {
-        backendUrl = "http://localhost:8080/api/v1";
-      } else {
-        // Enhanced production fallback
-        const currentHostname = window.location.hostname;
-        if (currentHostname.includes("vercel.app")) {
-          backendUrl = "https://readivine-backend.onrender.com/api/v1";
-        } else {
-          backendUrl = "https://readivine-backend.onrender.com/api/v1";
-        }
-      }
+    // In production, use relative URL to leverage Vercel proxy
+    // In development, use absolute URL to local backend
+    const isDevelopment = import.meta.env.DEV;
+    
+    if (isDevelopment) {
+      // Development - point to local backend
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
+      const authUrl = `${backendUrl}/auth/github`;
+      window.location.href = authUrl;
+    } else {
+      // Production - use relative URL that will be proxied by Vercel
+      window.location.href = "/api/v1/auth/github";
     }
 
-    // Log for debugging in production (stored in localStorage)
+    // Log for debugging
     const loginAttempt = {
       timestamp: new Date().toISOString(),
-      backendUrl,
+      authUrl: isDevelopment ? "local backend" : "vercel proxy",
       currentUrl: window.location.href,
       userAgent: navigator.userAgent,
     };
     
-    if (import.meta.env.DEV) {
+    if (isDevelopment) {
       console.log("Initiating GitHub login:", loginAttempt);
     } else {
       // Store for production debugging
       window.localStorage.setItem("lastLoginAttempt", JSON.stringify(loginAttempt));
     }
-
-    const authUrl = `${backendUrl}/auth/github`;
-    window.location.href = authUrl;
   };
 
   const logout = async () => {
