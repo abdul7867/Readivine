@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/((?!api/|_next/|.*\\..*).*)",
+      "source": "/((?!api|_next|static|favicon.ico|robots.txt|sitemap.xml|.*\\..*).*)",
       "destination": "/index.html"
     }
   ],
@@ -34,6 +34,24 @@
       ]
     },
     {
+      "source": "/login",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/dashboard",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {
@@ -42,7 +60,7 @@
         },
         {
           "key": "X-Frame-Options",
-          "value": "DENY"
+          "value": "SAMEORIGIN"
         },
         {
           "key": "X-XSS-Protection",
@@ -59,7 +77,7 @@
       ]
     }
   ],
-  "cleanUrls": true,
+  "cleanUrls": false,
   "trailingSlash": false,
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",

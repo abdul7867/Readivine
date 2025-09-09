@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 
 /**
  * Determines the API base URL based on the environment
@@ -15,26 +15,30 @@ const getApiBaseUrl = () => {
 
   if (isDevelopment) {
     // Development environment - connect to local backend
-    return 'http://localhost:8080/api/v1';
+    return "http://localhost:8080/api/v1";
   }
 
   if (isProduction) {
-    // Production environment - use relative URL or fallback
-    // This will use the same domain as the frontend
+    // Production environment - use environment variable or intelligent fallback
     const currentOrigin = window.location.origin;
-    
-    // If deployed on Vercel and backend is separate
-    if (currentOrigin.includes('vercel.app')) {
-      // Replace this with your actual production backend URL
-      return import.meta.env.VITE_PROD_API_URL || 'https://your-backend-domain.com/api/v1';
+
+    // Check for production API URL environment variable first
+    if (import.meta.env.VITE_PROD_API_URL) {
+      return import.meta.env.VITE_PROD_API_URL;
     }
-    
+
+    // If deployed on Vercel and backend is separate
+    if (currentOrigin.includes("vercel.app")) {
+      // Use the configured Render backend URL
+      return "https://readivine.onrender.com/api/v1";
+    }
+
     // Fallback for same-domain deployment
     return `${currentOrigin}/api/v1`;
   }
 
   // Fallback to localhost
-  return 'http://localhost:8080/api/v1';
+  return "http://localhost:8080/api/v1";
 };
 
 /**
@@ -43,16 +47,16 @@ const getApiBaseUrl = () => {
  */
 const api = axios.create({
   baseURL: getApiBaseUrl(),
-  
+
   // This is crucial for ensuring that the browser sends cookies (like our auth token)
   // with every request to the backend.
   withCredentials: true,
-  
+
   // Set default headers
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
-  
+
   // Request timeout (30 seconds)
   timeout: 30000,
 });
@@ -65,7 +69,7 @@ if (import.meta.env.DEV) {
       return config;
     },
     (error) => {
-      console.error('API Request Error:', error);
+      console.error("API Request Error:", error);
       return Promise.reject(error);
     }
   );
@@ -77,17 +81,49 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Enhanced error handling that works in production
+    const errorInfo = {
+      status: error.response?.status,
+      message: error.message,
+      url: error.config?.url,
+      baseURL: error.config?.baseURL,
+      timestamp: new Date().toISOString(),
+    };
+
     if (error.response?.status === 401) {
       // Handle unauthorized access
-      console.warn('Unauthorized access - redirecting to login');
-      // You might want to redirect to login page here
-      // window.location.href = '/login';
+      if (import.meta.env.DEV) {
+        console.warn("Unauthorized access - redirecting to login");
+      }
+      // Store error for debugging in production
+      window.localStorage.setItem("lastAuthError", JSON.stringify(errorInfo));
     } else if (error.response?.status >= 500) {
-      console.error('Server error:', error.response.data);
-    } else if (error.code === 'NETWORK_ERROR' || !error.response) {
-      console.error('Network error - check if backend is running');
+      if (import.meta.env.DEV) {
+        console.error("Server error:", error.response.data);
+      }
+      // Store server errors for production debugging
+      window.localStorage.setItem(
+        "lastServerError",
+        JSON.stringify({
+          ...errorInfo,
+          responseData: error.response.data,
+        })
+      );
+    } else if (error.code === "NETWORK_ERROR" || !error.response) {
+      if (import.meta.env.DEV) {
+        console.error("Network error - check if backend is running");
+      }
+      // Store network errors for production debugging
+      window.localStorage.setItem(
+        "lastNetworkError",
+        JSON.stringify({
+          ...errorInfo,
+          code: error.code,
+          currentURL: window.location.href,
+        })
+      );
     }
-    
+
     return Promise.reject(error);
   }
 );
