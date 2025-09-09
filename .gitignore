@@ -1,6 +1,8 @@
 # Dependencies
 node_modules/
 */node_modules/
+.kiro/specs/oauth-authentication-fix
+
 
 # Environment variables (CRITICAL - these contain secrets!)
 .env
