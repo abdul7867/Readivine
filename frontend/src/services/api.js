@@ -19,9 +19,8 @@ const getApiBaseUrl = () => {
   }
 
   if (isProduction) {
-    // In production, we use a relative URL to leverage Vercel's proxy rewrites.
-    // This makes all API requests appear to come from the same domain, solving cookie issues.
-    return "/";
+    // In production, use the direct backend URL since Vercel proxy has limitations with cookies
+    return "https://readivine.onrender.com/api/v1";
   }
 
   // Final fallback to localhost

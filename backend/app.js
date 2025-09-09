@@ -32,6 +32,11 @@ if (process.env.CORS_ORIGIN) {
   allowedOrigins.push(process.env.CORS_ORIGIN);
 }
 
+// Always allow production frontend URL
+if (isProduction) {
+  allowedOrigins.push('https://readivine.vercel.app');
+}
+
 // Always allow development origins in non-production
 if (!isProduction) {
   allowedOrigins.push(

@@ -34,17 +34,13 @@ const logoutUser = asyncHandler(async (req, res) => {
     );
 
     const isProduction = process.env.NODE_ENV === 'production';
-    const backendDomain = process.env.BACKEND_DOMAIN || 'localhost';
-    const frontendUrl = process.env.FRONTEND_URL || (isProduction ? 'https://readivine.vercel.app' : 'http://localhost:5173');
-    const frontendDomain = new URL(frontendUrl).hostname;
-    const isSameDomain = backendDomain === frontendDomain;
-
+    
     const options = {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction && !isSameDomain ? 'none' : 'lax',
+        sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-site in production
         path: '/',
-        ...(isProduction && isSameDomain && { domain: `.${backendDomain}` }),
+        // Remove domain restriction for cross-domain cookies
     };
 
     return res
@@ -144,21 +140,15 @@ const handleGitHubCallback = asyncHandler(async (req, res) => {
     const isProduction = process.env.NODE_ENV === 'production';
     const frontendUrl = process.env.FRONTEND_URL || (isProduction ? 'https://readivine.vercel.app' : 'http://localhost:5173');
     
-    // Check if domains match for same-site cookies
-    const backendDomain = process.env.BACKEND_DOMAIN || 'localhost';
-    const frontendDomain = new URL(frontendUrl).hostname;
-    const isSameDomain = backendDomain === frontendDomain;
-    
+    // For cross-domain deployment (Render backend + Vercel frontend)
     const options = {
       httpOnly: true,
       secure: isProduction, // Always secure in production
-      sameSite: isProduction && !isSameDomain ? 'none' : 'lax',
-      // Add domain for same-site scenarios
-      ...(isProduction && isSameDomain && { domain: `.${backendDomain}` }),
-      // Add path for better security
+      sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-site in production
       path: '/',
-      // Longer maxAge for refresh token in production
-      maxAge: isProduction ? 10 * 24 * 60 * 60 * 1000 : undefined, // 10 days in production
+      // Remove domain restriction for cross-domain cookies
+      // domain is not set for cross-origin scenarios
+      maxAge: isProduction ? 7 * 24 * 60 * 60 * 1000 : undefined, // 7 days in production
     };
 
     // Separate options for refresh token (longer expiry)
@@ -170,11 +160,16 @@ const handleGitHubCallback = asyncHandler(async (req, res) => {
     // Log for debugging in production
     if (isProduction) {
       logger.info(`Setting cookies for redirect to: ${frontendUrl}/dashboard`);
-      logger.info(`Cookie options:`, { 
+      logger.info(`Cookie options: ${JSON.stringify({ 
         secure: options.secure, 
         sameSite: options.sameSite,
-        domain: options.domain 
-      });
+        domain: options.domain,
+        httpOnly: options.httpOnly,
+        path: options.path,
+        maxAge: options.maxAge
+      }, null, 2)}`);
+      logger.info(`Request Origin: ${req.get('origin') || 'No origin header'}`);
+      logger.info(`User Agent: ${req.get('user-agent') || 'No user agent'}`);
     }
     
     res
@@ -197,10 +192,28 @@ const getAuthStatus = asyncHandler(async (req, res) => {
       .json(new ApiResponse(200, { authenticated: true, user: req.user }, "User authenticated."));
 });
 
+const checkCookies = asyncHandler(async (req, res) => {
+    // Simple endpoint to check if cookies are being received
+    const cookies = req.cookies;
+    const headers = req.headers;
+    
+    logger.info(`Cookie check - Received cookies: ${JSON.stringify(cookies)}`);
+    logger.info(`Cookie check - Origin: ${headers.origin || 'No origin'}`);
+    
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { 
+        cookiesReceived: Object.keys(cookies),
+        origin: headers.origin,
+        timestamp: new Date().toISOString()
+      }, "Cookie check complete."));
+});
+
 
 export { 
     logoutUser,
     redirectToGitHub, 
     handleGitHubCallback, 
-    getAuthStatus 
+    getAuthStatus,
+    checkCookies
 };

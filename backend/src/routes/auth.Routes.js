@@ -3,7 +3,8 @@ import {
     logoutUser,
     redirectToGitHub, 
     handleGitHubCallback, 
-    getAuthStatus 
+    getAuthStatus,
+    checkCookies
 } from '../controllers/auth.Controller.js';
 import { verifyJWT } from '../middleware/auth.middleware.js';
 
@@ -38,5 +39,8 @@ router.route('/check').get((req, res, next) => {
 // --- Protected Routes ---
 router.route('/logout').post(verifyJWT, logoutUser);
 router.route('/status').get(verifyJWT, getAuthStatus);
+
+// --- Debug Routes ---
+router.route('/cookies').get(checkCookies);
 
 export default router;
