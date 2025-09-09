@@ -1,8 +1,8 @@
 # Dependencies
 node_modules/
 */node_modules/
-.kiro/specs/oauth-authentication-fix
-
+frontend/node_modules/
+backend/node_modules/
 
 # Environment variables (CRITICAL - these contain secrets!)
 .env
@@ -16,6 +16,7 @@ backend/.env
 frontend/.env.production
 backend/.env.production
 frontend/.env.development
+backend/.env.development
 
 # Logs
 logs/
@@ -31,6 +32,8 @@ dist/
 build/
 */dist/
 */build/
+frontend/dist/
+backend/dist/
 
 # IDE and Editor files
 .vscode/
@@ -38,6 +41,7 @@ build/
 *.swp
 *.swo
 *~
+.git/*.swp
 
 # OS generated files
 .DS_Store
@@ -72,12 +76,13 @@ pids/
 *.seed
 *.pid.lock
 
-# Deployment and configuration files (keep examples)
+# Deployment and configuration files (keep examples but ignore scripts)
 deploy-*.ps1
 deploy-*.sh
 test-*.html
+test-cookies.html
 
-# Generated documentation (keep main docs)
+# Generated documentation files (these are auto-generated and shouldn't be in git)
 AUTHENTICATION_FIXES_SUMMARY.md
 BACKEND_DEPLOYMENT_RENDER.md
 CORS_CONFIGURATION.md
@@ -88,25 +93,97 @@ TASK_COMPLETION_SUMMARY.md
 TEST_DOCUMENTATION.md
 VERCEL_CONFIG_ANALYSIS.md
 
-# Kiro IDE specific (keep specs but ignore sensitive data)
+# Verification and diagnostic files
+frontend/verify-fixes.js
+
+# Kiro IDE specific files
 .kiro/settings/
 .kiro/cache/
 .kiro/logs/
+.kiro/specs/oauth-authentication-fix/
 
-# Vercel
+# Vercel deployment artifacts
 .vercel/
+.vercel
 
-# Package manager files (uncomment if you want to ignore them)
+# Package manager lock files (uncomment if you want to ignore them)
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
 
-# Test artifacts
+# Test artifacts and reports
 test-results/
 playwright-report/
 test-output/
+coverage/
 
 # Local development files
 *.local
 .env.development.local
 .env.production.local
+
+# Git artifacts
+.git/*.swp
+.git/COMMIT_EDITMSG
+.git/ORIG_HEAD
+.git/FETCH_HEAD
+
+# Development and testing utilities (these are for development only)
+frontend/src/test/
+backend/src/test/
+frontend/src/utils/authDiagnostic.js
+frontend/src/utils/authTestUtils.js
+frontend/src/utils/apiTestUtils.js
+frontend/src/components/AuthDebugPanel.jsx
+
+# Validation and configuration scripts (development only)
+scripts/validate-config.js
+frontend/src/utils/validateAuthConfig.js
+
+# Individual gitignore files in subdirectories (redundant)
+frontend/.gitignore
+backend/.gitignore
+
+# Additional development artifacts
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+
+# Editor backup files
+*~
+.#*
+\#*#
+.*.swp
+.*.swo
+
+# MacOS specific
+.AppleDouble
+.LSOverride
+
+# Windows specific
+*.lnk
+
+# Linux specific
+.fuse_hidden*
+.directory
+.Trash-*
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Lock files (optional - uncomment if you want to ignore them)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Runtime configuration
+.npmrc
+.yarnrc
+.yarnrc.yml
+
+# Local environment overrides
+.env.override
+.env.*.override
