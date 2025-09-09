@@ -11,7 +11,7 @@ import DashboardPage from './pages/DashboardPage';
 import DebugPage from './pages/DebugPage';
 import LoadingSpinner from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
-import AuthDebugPanel from './components/AuthDebugPanel';
+
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -205,7 +205,6 @@ function App() {
       <ErrorBoundary>
         <AuthProvider>
           <AppRoutes />
-          <AuthDebugPanel />
           <Toaster
             position="top-right"
             toastOptions={{
