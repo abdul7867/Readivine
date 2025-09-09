@@ -3,10 +3,7 @@ import {
     logoutUser,
     redirectToGitHub, 
     handleGitHubCallback, 
-    getAuthStatus,
-    checkCookies,
-    debugCookieConfig,
-    debugOAuthFlow
+    getAuthStatus
 } from '../controllers/auth.Controller.js';
 import { verifyJWT } from '../middleware/auth.middleware.js';
 
@@ -42,9 +39,6 @@ router.route('/check').get((req, res, next) => {
 router.route('/logout').post(verifyJWT, logoutUser);
 router.route('/status').get(verifyJWT, getAuthStatus);
 
-// --- Debug Routes ---
-router.route('/cookies').get(checkCookies);
-router.route('/debug/config').get(debugCookieConfig);
-router.route('/debug/oauth').get(debugOAuthFlow);
+// Debug routes removed for production - use separate debug controller if needed
 
 export default router;
