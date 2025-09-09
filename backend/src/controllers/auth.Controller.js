@@ -33,9 +33,18 @@ const logoutUser = asyncHandler(async (req, res) => {
         }
     );
 
+    const isProduction = process.env.NODE_ENV === 'production';
+    const backendDomain = process.env.BACKEND_DOMAIN || 'localhost';
+    const frontendUrl = process.env.FRONTEND_URL || (isProduction ? 'https://readivine.vercel.app' : 'http://localhost:5173');
+    const frontendDomain = new URL(frontendUrl).hostname;
+    const isSameDomain = backendDomain === frontendDomain;
+
     const options = {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: isProduction,
+        sameSite: isProduction && !isSameDomain ? 'none' : 'lax',
+        path: '/',
+        ...(isProduction && isSameDomain && { domain: `.${backendDomain}` }),
     };
 
     return res
@@ -131,18 +140,47 @@ const handleGitHubCallback = asyncHandler(async (req, res) => {
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
 
+    // Enhanced cookie options for cross-origin deployment
+    const isProduction = process.env.NODE_ENV === 'production';
+    const frontendUrl = process.env.FRONTEND_URL || (isProduction ? 'https://readivine.vercel.app' : 'http://localhost:5173');
+    
+    // Check if domains match for same-site cookies
+    const backendDomain = process.env.BACKEND_DOMAIN || 'localhost';
+    const frontendDomain = new URL(frontendUrl).hostname;
+    const isSameDomain = backendDomain === frontendDomain;
+    
     const options = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: isProduction, // Always secure in production
+      sameSite: isProduction && !isSameDomain ? 'none' : 'lax',
+      // Add domain for same-site scenarios
+      ...(isProduction && isSameDomain && { domain: `.${backendDomain}` }),
+      // Add path for better security
+      path: '/',
+      // Longer maxAge for refresh token in production
+      maxAge: isProduction ? 10 * 24 * 60 * 60 * 1000 : undefined, // 10 days in production
     };
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    // Separate options for refresh token (longer expiry)
+    const refreshTokenOptions = {
+      ...options,
+      maxAge: isProduction ? 10 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000, // 10 days prod, 1 day dev
+    };
+
+    // Log for debugging in production
+    if (isProduction) {
+      logger.info(`Setting cookies for redirect to: ${frontendUrl}/dashboard`);
+      logger.info(`Cookie options:`, { 
+        secure: options.secure, 
+        sameSite: options.sameSite,
+        domain: options.domain 
+      });
+    }
     
     res
     .status(200)
     .cookie('accessToken', accessToken, options)
-    .cookie('refreshToken', refreshToken, options)
+    .cookie('refreshToken', refreshToken, refreshTokenOptions)
     .redirect(`${frontendUrl}/dashboard`);
 
   } catch (error) {
