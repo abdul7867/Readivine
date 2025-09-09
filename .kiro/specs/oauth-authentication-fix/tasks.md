@@ -90,3 +90,17 @@
     deployment guidence 
   - make folder in docs folder and add .md files backend on there domain
   - _Requirements: 2.3, 3.3, 5.4_
+
+- [x] 9. Fix cross-domain cookie transmission issue
+  - Investigate why cookies set during OAuth callback are not being sent in subsequent requests
+  - Implement cookie domain and SameSite attribute debugging
+  - Add comprehensive cookie transmission testing and validation
+  - Fix the specific issue where frontend shows 'cookies: None' after successful OAuth
+  - _Requirements: 1.1, 1.4, 3.1, 3.2_
+
+- [x] 10. Refactor auth controller for production readiness
+  - Modularize auth controller by extracting utilities and services
+  - Remove debug endpoints and testing code for production deployment
+  - Create separate modules for cookie config, GitHub OAuth, and user services
+  - Validate refactored code structure and functionality
+  - _Requirements: 5.1, 5.2, 5.3, 5.4_
