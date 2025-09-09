@@ -67,26 +67,27 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = () => {
-    // In production, use relative URL to leverage Vercel proxy
-    // In development, use absolute URL to local backend
+    // Determine the correct backend URL based on environment
     const isDevelopment = import.meta.env.DEV;
+    let backendUrl;
     
     if (isDevelopment) {
       // Development - point to local backend
-      const backendUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
-      const authUrl = `${backendUrl}/auth/github`;
-      window.location.href = authUrl;
+      backendUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
     } else {
-      // Production - use relative URL that will be proxied by Vercel
-      window.location.href = "/api/v1/auth/github";
+      // Production - use direct backend URL for OAuth flow
+      backendUrl = "https://readivine.onrender.com/api/v1";
     }
-
+    
+    const authUrl = `${backendUrl}/auth/github`;
+    
     // Log for debugging
     const loginAttempt = {
       timestamp: new Date().toISOString(),
-      authUrl: isDevelopment ? "local backend" : "vercel proxy",
+      authUrl: authUrl,
       currentUrl: window.location.href,
       userAgent: navigator.userAgent,
+      environment: isDevelopment ? 'development' : 'production'
     };
     
     if (isDevelopment) {
@@ -95,6 +96,8 @@ export const AuthProvider = ({ children }) => {
       // Store for production debugging
       window.localStorage.setItem("lastLoginAttempt", JSON.stringify(loginAttempt));
     }
+
+    window.location.href = authUrl;
   };
 
   const logout = async () => {

@@ -11,6 +11,27 @@
   ],
   "headers": [
     {
+      "source": "/api/:path*",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://readivine.vercel.app"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Cookie"
+        }
+      ]
+    },
+    {
       "source": "/(.*\\.(?:js|jsx|ts|tsx|mjs))$",
       "headers": [
         {
